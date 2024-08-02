@@ -1,0 +1,49 @@
+---
+- name: Playbook para conectarse via Telnet y ejecutar comandos
+  hosts: switches
+  gather_facts: False
+  connection: network_cli
+  vars:
+    ansible_network_os: ios
+  collections:
+    - ansible.netcommon
+
+  tasks:
+    - name: Conectarse al dispositivo via Telnet y ejecutar comandos
+      ansible.netcommon.telnet:
+        host: "{{ ansible_host }}"
+        port: 23
+        login_prompt: "#"
+        password_prompt: "#"
+        prompts:
+          - "[>#]"
+        command:
+          - show ip ssh
+      register: show_ip_output
+
+    - name: Comprueba que Enabled esta en the command output
+      block:
+        - name: Apply configuration if 'Enabled' is not found
+          ansible.netcommon.telnet:
+            host: "{{ ansible_host }}"
+            port: 23
+            login_prompt: "#"
+            password_prompt: "#"
+            prompts:
+              - "[>#]"
+            command:
+              - terminal length 0
+              - conf t
+              - ip domain-name cisco.udc.es
+              - crypto key generate rsa modulus 2048
+              - ip ssh version 2
+              - ip ssh time-out 60
+              - ip ssh authentication-retries 3
+              - line vty 5 15
+              - transport input ssh
+              - login local
+              - username skyripa privilege 15 password s3cr3t
+              - enable secret s3cr3t
+              - service password-encryption
+              - exit
+      when: "'Enabled' not in show_ip_output.stdout"
