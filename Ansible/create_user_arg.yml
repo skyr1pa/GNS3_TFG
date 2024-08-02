@@ -1,0 +1,29 @@
+---
+- name: Create a user on Cisco router
+  hosts: switches
+  gather_facts: True
+  connection: network_cli
+  vars:
+    ansible_network_os: ios
+    username: "{{ username }}"
+    password: "{{ password }}"
+
+  tasks:
+    - name: Check if the user exists on the router
+      ios_command:
+        commands:
+          - "show running-config | include username {{ username }}"
+      register: user_check
+      changed_when: False
+
+    - name: Set user_exists fact
+      set_fact:
+        user_exists: "{{ user_check.stdout[0] is not none and user_check.stdout[0] != '' }}"
+
+    - name: Create user on Cisco router
+      cisco.ios.ios_user:
+        name: "{{ username }}"
+        privilege: 15
+        state: present
+        configured_password: "{{ password }}"
+      when: not user_exists
