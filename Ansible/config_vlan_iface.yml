@@ -1,0 +1,70 @@
+---
+- name: VLAN and Interface Configuration Playbook
+  hosts: switches
+  gather_facts: yes
+  connection: network_cli
+  vars:
+    vlan_id: "{{ vlan_id }}"
+    vlan_name: "{{ vlan_name }}"
+    interfaces_list: "{{ interfaces_list }}"
+    ansible_network_os: ios
+
+  tasks:
+    - name: generate list from string
+      set_fact:
+        iface_list: "{{ interfaces_list.split(',') | list }}"
+        default_gateway: "{{ default_gateway | default('') }}"
+        svi_mask: "{{ svi_mask | default('') }}"
+        svi_ip: "{{ svi_ip | default('') }}"
+
+    - name: Check if VLAN exists
+      ios_command:
+        commands:
+          - "show vlan id {{ vlan_id }}"
+      register: check_vlan
+      ignore_errors: yes
+
+    - name: Create Vlan
+      cisco.ios.ios_vlans:
+        config:
+        - name: "{{ vlan_name }}"
+          vlan_id: "{{ vlan_id }}"
+          state: active
+          shutdown: disabled
+      when: check_vlan.failed #if previous task failed, then vlan not exists
+
+    - name: Configure interfaces in appropriate mode
+      vars:
+        iface_name: "{{ item[:-1] }}"
+        iface_mode: "{{ item[-1] }}"
+      ios_config:
+        lines: |
+          {% if iface_mode == 'a' %}
+          interface {{ iface_name }}
+          switchport mode access
+          switchport access vlan {{ vlan_id }}
+          {% elif iface_mode == 't' %}
+          interface {{ iface_name }}
+          switchport mode trunk
+          switchport trunk allowed vlan add {{ vlan_id }}
+          {% else %}
+          # Invalid mode, skip configuration
+          {% endif %}
+      loop: "{{ iface_list }}"
+      when: iface_mode in ['a', 't']
+
+    - name: Configure SVI interface if IP is provided
+      ios_config:
+        parents:
+          - "interface vlan {{ vlan_id }}"
+        lines:
+          - "ip address {{ svi_ip }} {{ svi_mask }}"
+          - "no shutdown"
+      when: svi_ip != '' or svi_mask != ''
+
+    - name: Configure default gateway if provided
+      ios_config:
+        lines:
+          - "ip routing"
+          - "ip default-gateway {{ default_gateway }}"
+      when: default_gateway != ''
