@@ -33,18 +33,66 @@ class CustomIOSDriver(IOSDriver):
              print(f"SSH has been enabled succesfuly! :)")
              self.close()
 
-    def get_users(self):
-       self.open()
-       command = 'sh run | i user'
-       output = self._send_command(command)
-       data = []
-       for line in output.splitlines():
-           parts = line.split()
-           data.append(parts[1])
+    def config_interfaces(self, vid):
+        print("Showing available interfaces:\n ")
+        print(self._send_command(['show ip interface brief | include up']))
+        self.close()
+        input_iface = ''
 
-       print("Users")
-       print("-----------")
-       for item in data:
-           print(item)
+        while(input_iface == '' or input_iface == ' '):
+           input_iface = input("Specify wanted Interface separated by ';'. Use '-' for ranges ('s' to skip):\n")
+        if(input_iface != 's'):
+           parsed_interfaces = input_iface.split(';')
 
-       return data
+           for iface in parsed_interfaces:
+               input_mode = ''
+               if '-' in iface:
+                  print("--> Configuring VLAN " + vid + " on interface range " + iface +"\n")
+               else:
+                  print("--> Configuring VLAN " + vid + " on interface " + iface +"\n")
+               while input_mode not in ['a', 't', 's']:
+                  input_mode = input("Select the configuration mode 't' for trunk mode or 'a' for access mode. ('s' to skip\n")
+               if(input_mode == 'a'):
+                  if '-' in iface:
+                      print("#Configuring ports in mode access\n")
+                      iface_cmd = [
+                         'conf t',
+                         'interface range ' + iface,
+                         'switchport mode access',
+                         'switchport access vlan ' + vid
+                      ]
+                      self.open()
+                      print(self.cli(iface_cmd))
+                  else:
+                      print("#Configuring port in mode access\n")
+                      iface_cmd = [
+                          'conf t',
+                          'interface ' + iface,
+                          'switchport mode access',
+                          'switchport access vlan ' + vid
+                      ]
+                      self.open()
+                      print(self.cli(iface_cmd))
+               elif(input_mode == 't'):
+                  if '-' in iface:
+                      print("#Configuring ports in mode trunk\n")
+                      iface_cmd = [
+                         'conf t',
+                         'interface range ' + iface,
+                         'switchport mode trunk',
+                         'switchport trunk allowed vlan ' + vid
+                      ]
+                      self.open()
+                      print(self.cli(iface_cmd))
+                  else:
+                      print("#Configuring port in mode trunk\n")
+                      iface_cmd = [
+                          'conf t',
+                          'interface ' + iface,
+                          'switchport mode trunk',
+                          'switchport trunk allowed vlan ' + vid
+                      ]
+                      self.open()
+                      print(self.cli(iface_cmd))
+               else:
+                  continue
