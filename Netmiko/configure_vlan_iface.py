@@ -50,6 +50,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
             con.send_config_set(conf_set)
             print("VLAN " + args.vlanID + " created succesfuly! :D\n")
         else:
+            check = True
             print("VLAN " + args.vlanID + " is already created\n")
 
         print("Showing available interfaces:\n ")
@@ -110,7 +111,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
         print("##############CONFIGURE SVI INTERFACE############## \n")
         svi_cmd = "show interface vlan" + args.vlanID
         svi_output = con.send_command(svi_cmd)
-        if "SVI" in svi_output:
+        if check and "SVI" in svi_output:
            print("SVI is already configured for the VLAN " + args.vlanID +"\n")
         else:
            svi_ip = input("Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s to skip)")
@@ -132,7 +133,6 @@ for row, (clave, valor) in enumerate(HOST.items()):
               ip_cmd = [
                  'ip routing',
                  'ip default-gateway ' + gtw_ip,
-                 'no shutdown'
                  ]
               print(con.send_config_set(ip_cmd))
 
