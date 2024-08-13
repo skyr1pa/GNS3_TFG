@@ -5,47 +5,48 @@ def process_user(router_info, vid, vname):
 
     hostname=router_info['hostname']
     username=router_info['username']
-    password=strrouter_info['password']
+    password=router_info['password']
 
     ios_router = driver_ios(hostname, username, password, optional_args={'cmd_verify': False} )
 
-    print(f"******** Connecting to IOS Router ({router_info['hostname']}) via Telnet ******** ")
-    ios_router.open()
-    print("Step 1: Checking IOS Router Connection Status")
-    print(ios_router.is_alive())
-    print(f"Host {router_info['hostname']} is alive")
+    print(f"******** Connecting to IOS Router ({router_info['hostname']}) via SSH ******** ")
+    #ios_router.open()
+    #print("Step 1: Checking IOS Router Connection Status")
+    #print(ios_router.is_alive())
+
     ios_router.open()
     show_vlan = 'show vlan brief'
     lista = ios_router.cli([show_vlan])
+    print(f"\n### STEP 1: CREATE VLAN {vid} {vname} " + "###")
     #list(lista.values())[0]
     if vid in lista[show_vlan]:
-       print(f"VLAN {vid} already exists!")
-       check = True
+       print(f"    SKIP! VLAN {vid} already exists! Omiting...\n")
+       exist = True
     else:
        commands= ['conf t',
                   'vlan '+ vid,
                   'name ' + vname
                  ]
-       print(f"Creating vlan {vname}...")
+       print(f"   --> Creating vlan {vname}...")
        print(commands)
        ios_router.open()
        ios_router.cli(commands)
-       print(f"VLAN {vname} created succesfully! Bye :D")
-
+       print(f"    OK! VLAN {vname} created succesfully! :D\n")
+       exist = False
 
     ios_router.open()
     ios_router.config_interfaces(vid)
 
-    print("\n##############CONFIGURE SVI INTERFACE############## \n")
+    print("\n### STEP 3: CONFIGURE SVI INTERFACE " +"###")
 
     ios_router.open()
     svi_ip = ''
-
-    if check and vname in ios_router.get_interfaces_ip():
-      print("SVI is already configured for the VLAN " + vid)
+    iname = "Vlan" + vid
+    if exist and iname in ios_router.get_interfaces_ip():
+      print("    SKIP! SVI is already configured for the VLAN " + vid + ". Omiting...")
     else:
       while(svi_ip == '' or svi_ip == ' '):
-         svi_ip = input("Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s to skip)\n")
+         svi_ip = input("  > Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s skip)\n")
       if(svi_ip != 's'):
         svi_cmd = [
           'conf t',
@@ -53,10 +54,12 @@ def process_user(router_info, vid, vname):
           'ip address ' + svi_ip,
           'no shutdown'
             ]
+        print(f"   --> Configuring interface {vid}...")
         ios_router.open()
         print(ios_router.cli(svi_cmd))
+        print(f"    OK! Interface {vid} configured succesfully! :D")
 
-    print("\n##############CONFIGURE DEFAULT GATEWAY##############\n")
+    print("\n### STEP 4: CONFIGURE DEFAULT GATEWAY " + "###")
 
     ios_router.open()
     config = ios_router.get_config()
@@ -64,16 +67,19 @@ def process_user(router_info, vid, vname):
     gtw_input = ''
 
     if 'default-gateway' in config['running']:
-      print("Default gateway is already configured\n")
+      print("    SKIP! Default gateway is already configured! Bye! :D\n")
     else:
       while(gtw_input == '' or gtw_input == ' '):
-         gtw_input = input("Especify the IP of the default gateway (ej. 192.168.45.254) (s to skip)\n")
+         gtw_input = input("  > Especify the IP of the default gateway (ej. 192.168.45.254) (s skip)\n")
       if(gtw_input != 's'):
         gtw_cmd = [
+          'conf t',
           'ip routing',
           'ip default-gateway ' + gtw_input,
            ]
+        print("   --> Configuring svi interface...")
         print(ios_router.cli(gtw_cmd))
+        print(f"    OK! SVI interface configured succesfully! Bye! :D")
 
 def main():
    parser = argparse.ArgumentParser(description='Create a vlan and associate to one or various interfaces.\nConfigure the switport mode.\nConfigure SVI or Default Gateway\n')
@@ -84,7 +90,7 @@ def main():
    with open('routers.csv', mode='r') as csvfile:
         csv_reader = csv.DictReader(csvfile)
         for row in csv_reader:
-           print(row)
+           #print(row)
            process_user(row, args.vlanID, args.vlanName)
 
 def check_vlanID(value):
