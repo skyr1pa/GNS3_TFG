@@ -31,110 +31,122 @@ with open('hosts_ssh.csv',encoding='utf-8-sig', mode='r') as hosts_ssh:   #Read 
 
 for row, (clave, valor) in enumerate(HOST.items()):
     try:
-        print(f'{valor}')
         con = ConnectHandler(**valor)
-        print("Established SSH conection.")
+        print("Established SSH conection.\n")
 
+        print("\n##############CONFIGURE VLAN############## \n")
         command = 'show vlan id ' + args.vlanID
         output = con.send_command(command)
-        print(output)
 
         if "not found" in output:
-            print("--> Creating VLAN " + args.vlanID +"...\n")
+            print("  --> Creating VLAN " + args.vlanID +"...\n")
             conf_set = [
-                'conf t',
                 'vlan ' + args.vlanName ,
                 'vlan ' + args.vlanID ,
                 'end'
             ]
             con.send_config_set(conf_set)
-            print("VLAN " + args.vlanID + " created succesfuly! :D\n")
+            print("    OK! VLAN " + args.vlanID + " created succesfuly! :D\n")
         else:
-            check = True
-            print("VLAN " + args.vlanID + " is already created\n")
-
-        print("Showing available interfaces:\n ")
-        print(con.send_command("show ip interface brief | include up"))
+            print("    SKIP! VLAN " + args.vlanID + " is already created\n")
 
         input_iface = ''
 
+        print("\n##############CONFIGURE INTERFACES############## \n")
+
         while(input_iface == '' or input_iface == ' '):
-           input_iface = input("Specify wanted Interface separated by ';'. Use '-' for ranges ('s' to skip):\n")
+           input_iface = input("  > Specify wanted Interface separated by ';'. Use '-' for ranges ('s' to skip):\n")
         if(input_iface != 's'):
            parsed_interfaces = input_iface.split(';')
 
            for iface in parsed_interfaces:
                input_mode = ''
                if '-' in iface:
-                  print("--> Configuring VLAN " + args.vlanID + " on interface rangue " + iface +"\n")
+                  print(" * Configuring VLAN " + args.vlanID + " on interface rangue " + iface +"\n")
                else:
-                  print("--> Configuring VLAN " + args.vlanID + " on interface " + iface +"\n")
+                  print(" * Configuring VLAN " + args.vlanID + " on interface " + iface +"\n")
                while input_mode not in ['a', 't', 's']:
-                  input_mode = input("Select the configuration mode 't' for trunk mode or 'a' for access mode. ('s' to skip\n")
+                  input_mode = input("   > Select the configuration mode 't' for trunk mode or 'a' for access mode. ('s' to skip\n")
                if(input_mode == 'a'):
                   if '-' in iface:
-                      print("#Configuring ports in mode access\n")
+                      print("  --> Configuring ports in mode access...\n")
                       iface_cmd = [
                          'interface range ' + iface,
                          'switchport mode access',
                          'switchport access vlan ' + args.vlanID
                       ]
-                      print(con.send_config_set(iface_cmd))
+                      con.send_config_set(iface_cmd)
+                      #print(con.send_config_set(iface_cmd))
+                      print("   OK! Interface range " + iface + " configured succesfully\n")
+
                   else:
-                      print("#Configuring port in mode access\n")
+                      print("  --> Configuring port in mode access...\n")
                       iface_cmd = [
                           'interface ' + iface,
                           'switchport mode access',
                           'switchport access vlan ' + args.vlanID
                       ]
-                      print(con.send_config_set(iface_cmd))
+                      con.send_config_set(iface_cmd)
+                      #print(con.send_config_set(iface_cmd))
+                      print("   OK! Interface " + iface + " configured succesfully\n")
+
                elif(input_mode == 't'):
                   if '-' in iface:
-                      print("#Configuring ports in mode trunk\n")
+                      print("  --> Configuring ports in mode trunk...\n")
                       iface_cmd = [
                          'interface range ' + iface,
                          'switchport mode trunk',
-                         'switchport trunk allowed vlan ' + args.vlanID
+                         'switchport trunk allowed vlan add ' + args.vlanID
                       ]
-                      print(con.send_config_set(iface_cmd))
+                      con.send_config_set(iface_cmd)
+                      #print(con.send_config_set(iface_cmd))
+                      print("   OK! Interface range " + iface + " configured succesfully\n")
+
                   else:
-                      print("#Configuring port in mode trunk\n")
+                      print("  --> Configuring port in mode trunk...\n")
                       iface_cmd = [
                           'interface ' + iface,
                           'switchport mode trunk',
-                          'switchport trunk allowed vlan ' + args.vlanID
+                          'switchport trunk allowed vlan add ' + args.vlanID
                       ]
-                      print(con.send_config_set(iface_cmd))
+                      con.send_config_set(iface_cmd)
+                      #print(con.send_config_set(iface_cmd))
+                      print("   OK! Interface range " + iface + " configured succesfully\n")
                else:
                   continue
 
         print("##############CONFIGURE SVI INTERFACE############## \n")
         svi_cmd = "show interface vlan" + args.vlanID
         svi_output = con.send_command(svi_cmd)
-        if check and "SVI" in svi_output:
-           print("SVI is already configured for the VLAN " + args.vlanID +"\n")
+        if "SVI" in svi_output:
+           print("    SKIP! SVI is already configured for the VLAN " + args.vlanID +"\n")
         else:
-           svi_ip = input("Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s to skip)")
+           svi_ip = input("  > Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s skip)\n")
            if(svi_ip != 's'):
               ip_cmd = [
                  'interface vlan ' + args.vlanID,
                  'ip address ' + svi_ip,
                  'no shutdown'
                ]
-              print(con.send_config_set(ip_cmd))
+              con.send_config_set(ip_cmd)
+              print("    OK! Interface VLAN" + args.vlanID + " configured succesfully! :D\n")
+              #print(con.send_config_set(ip_cmd))
 
-        print("##############CONFIGURE DEFAULT GATEWAY##############")
+        print("##############CONFIGURE DEFAULT GATEWAY##############\n")
         gtw_output = con.send_command("sh run | i default-gateway")
         if "gateway" in gtw_output:
-           print("Default gateway is already configured\n")
+           print("    SKIP! Default gateway is already configured\n")
         else:
-           gtw_ip = input("Especify the IP of the default gateway (ej. 192.168.45.254) (s to skip)")
+           gtw_ip = input(" > Especify the IP of the default gateway (ej. 192.168.45.254) (s skip)\n")
            if(gtw_ip != 's'):
               ip_cmd = [
                  'ip routing',
                  'ip default-gateway ' + gtw_ip,
                  ]
-              print(con.send_config_set(ip_cmd))
+
+              con.send_config_set(ip_cmd)
+              #print(con.send_config_set(ip_cmd))
+              print("    OK! Default-gateway configured succesfully! :D\n")
 
     except Exception as e:
        print("Error: ",e)
