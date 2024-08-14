@@ -1,7 +1,7 @@
 ---
-- name: VLAN and Interface Configuration Playbook
+- name: VLAN, Interface, SVI and Default Gateway Configuration Playbook
   hosts: switches
-  gather_facts: yes
+  gather_facts: True
   connection: network_cli
   vars:
     vlan_id: "{{ vlan_id }}"
@@ -10,61 +10,76 @@
     ansible_network_os: ios
 
   tasks:
-    - name: generate list from string
+    - name: LOADING - Collecting facts...
+      cisco.ios.ios_facts:
+        gather_subset:
+          - config
+          - interfaces
+      no_log: true
+
+    - name: LOADING - Configuring user variables...
       set_fact:
         iface_list: "{{ interfaces_list.split(',') | list }}"
         default_gateway: "{{ default_gateway | default('') }}"
-        svi_mask: "{{ svi_mask | default('') }}"
         svi_ip: "{{ svi_ip | default('') }}"
+        svi_check: "{{ 'Vlan' ~ vlan_id not in ansible_net_interfaces }}"
+        gtw_check: "{{ 'default-gateway' not in ansible_net_config }}"
+      no_log: true
 
-    - name: Check if VLAN exists
+    - name: LOADING - Checking if VLAN already exists...
       ios_command:
         commands:
           - "show vlan id {{ vlan_id }}"
       register: check_vlan
       ignore_errors: yes
+      no_log: true
 
-    - name: Create Vlan
+    - name: STEP 1 - Configure VLAN
       cisco.ios.ios_vlans:
         config:
         - name: "{{ vlan_name }}"
           vlan_id: "{{ vlan_id }}"
           state: active
           shutdown: disabled
-      when: check_vlan.failed #if previous task failed, then vlan not exists
+      when: check_vlan.failed
 
-    - name: Configure interfaces in appropriate mode
-      vars:
-        iface_name: "{{ item[:-1] }}"
-        iface_mode: "{{ item[-1] }}"
-      ios_config:
-        lines: |
-          {% if iface_mode == 'a' %}
-          interface {{ iface_name }}
-          switchport mode access
-          switchport access vlan {{ vlan_id }}
-          {% elif iface_mode == 't' %}
-          interface {{ iface_name }}
-          switchport mode trunk
-          switchport trunk allowed vlan add {{ vlan_id }}
-          {% else %}
-          # Invalid mode, skip configuration
-          {% endif %}
+    - name: STEP 2.1 - Configure interfaces in access mode
+      ios_l2_interfaces:
+        config:
+          - name: "{{ item[:-1] }}"
+            access:
+              vlan: "{{ vlan_id }}"
+        state: merged
       loop: "{{ iface_list }}"
-      when: iface_mode in ['a', 't']
+      when: item[:-1] in ['a']
 
-    - name: Configure SVI interface if IP is provided
-      ios_config:
-        parents:
-          - "interface vlan {{ vlan_id }}"
-        lines:
-          - "ip address {{ svi_ip }} {{ svi_mask }}"
-          - "no shutdown"
-      when: svi_ip != '' or svi_mask != ''
 
-    - name: Configure default gateway if provided
+    - name: STEP 2.2 - Configure interfaces in trunk mode
+      ios_l2_interfaces:
+        config:
+          - name: "{{ item[:-1] }}"
+            trunk:
+              allowed_vlans: "{{ vlan_id }}"
+              encapsulation: dot1q
+        state: merged
+      loop: "{{ iface_list }}"
+      when: item[-1] in ['t']
+
+    - name: STEP 3 - Configure SVI interface
+      vars:
+        svi_var: svi_check
+      ios_l3_interfaces:
+        config:
+          - name: vlan " {{ vlan_id }}"
+            ipv4:
+            - address: "{{ svi_ip }}"
+      when: "lookup('vars', svi_var) and svi_ip != ''"
+
+    - name: STEP 4 - Configure default gateway
+      vars:
+        gtw_var: gtw_check
       ios_config:
         lines:
           - "ip routing"
           - "ip default-gateway {{ default_gateway }}"
-      when: default_gateway != ''
+      when: "lookup('vars', gtw_var) and default_gateway != ''"
