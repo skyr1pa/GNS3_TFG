@@ -9,21 +9,23 @@
     password: "{{ password }}"
 
   tasks:
-    - name: Check if the user exists on the router
-      ios_command:
-        commands:
-          - "show running-config | include username {{ username }}"
-      register: user_check
-      changed_when: False
+    - name: LOADING - Collecting facts...
+      cisco.ios.ios_facts:
+        gather_subset:
+          - config
 
-    - name: Set user_exists fact
+    - name: LOADING - Checking user...
       set_fact:
-        user_exists: "{{ user_check.stdout[0] is not none and user_check.stdout[0] != '' }}"
+        user_exists: "{{ username not in ansible_net_config }}"
+        username: "{{ username | default('') }}"
+        password: "{{ password | default('12345') }}"
 
-    - name: Create user on Cisco router
+    - name: STEP 1/1 Create user on Cisco router
+      vars:
+        user_var: user_exists
       cisco.ios.ios_user:
         name: "{{ username }}"
         privilege: 15
         state: present
         configured_password: "{{ password }}"
-      when: not user_exists
+      when: "lookup('vars', user_var) and username != ''"
