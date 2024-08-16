@@ -1,5 +1,5 @@
 ---
-- name: Playbook para conectarse via Telnet y ejecutar comandos
+- name: Enable SSH on Cisco Devices
   hosts: switches
   gather_facts: False
   connection: network_cli
@@ -9,7 +9,7 @@
     - ansible.netcommon
 
   tasks:
-    - name: Conectarse al dispositivo via Telnet y ejecutar comandos
+    - name: LOADING - Checking if SSH is already enabled...
       ansible.netcommon.telnet:
         host: "{{ ansible_host }}"
         port: 23
@@ -21,7 +21,7 @@
           - show ip ssh
       register: show_ip_output
 
-    - name: Comprueba que Enabled esta en the command output
+    - name: STEP 1/1 - Configure SSH
       block:
         - name: Apply configuration if 'Enabled' is not found
           ansible.netcommon.telnet:
