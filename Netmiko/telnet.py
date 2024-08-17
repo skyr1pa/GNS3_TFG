@@ -1,7 +1,7 @@
 from asyncore import read
 from netmiko import ConnectHandler
 import csv
-# Definir los detalles de conexion del dispositivo
+
 ssh_commands = [
     'ip domain-name cisco.udc.es',
     'crypto key generate rsa modulus 2048',
@@ -32,32 +32,29 @@ with open('hosts_telnet.csv',encoding='utf-8-sig', mode='r') as hosts_telnet:   
             HOST[iter]['port'] = data[2]
             iter += 1
 
-# Establecer la conexion Telnet al dispositivo
 for row, (clave, valor) in enumerate(HOST.items()):
     try:
-        print(f'{valor}')
+        print(f"{valor['host']}")
         telnet_session = ConnectHandler(**valor)
-        print("Conexion Telnet establecida con exito.")
-        # Ejecutar comandos de configuracion SSH
+
+        print(f"***** Connected to device {valor['host']} *****\n")
         output = telnet_session.send_config_set(['exit', 'show ip ssh'])
         lines = output.splitlines()
+        print("### STEP 1/1 - CONFIGURE SSH " + "###\n")
 
         for line in lines:
             if line.startswith('SSH Disabled'):
-                print(line)
-                print("Configuring SSH v2...")
+                #print(line)
+                print("   --> Configuring SSH v2...")
                 telnet_session.send_config_set(ssh_commands)
-                print("SSH has been Enabled! :)")
+                print("    OK! SSH has been Enabled! :)")
                 break
             elif line.startswith('SSH Enabled'):
-                print(line)
-                print("Nothing to configure")
+                #print(line)
+                print("    SKIP! SSH is already enabled on device! Finish :D")
                 break
 
-        # Cerrar la sesion Telnet
         telnet_session.disconnect()
-        print("Clossing telnet conection... Bye!")
-
 
     except Exception as e:
         print("Error al intentar configurar SSH:", e)
