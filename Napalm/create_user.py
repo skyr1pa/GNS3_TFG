@@ -30,7 +30,7 @@ def process_user(router_info, user, passw):
        print(f"    OK! User {user} created succesfully! Bye :D")
 
 def main():
-   parser = argparse.ArgumentParser(description='Create a new user in a Cisco Router')
+   parser = argparse.ArgumentParser(description='Create a new user in a Cisco device')
    parser.add_argument('username', type=str, help='The name of the user.')
    parser.add_argument('password', type=str, help='The password of the user')
    args = parser.parse_args()
