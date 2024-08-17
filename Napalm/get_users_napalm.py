@@ -6,35 +6,33 @@ def process_user(router_info, user, passw):
         hostname=router_info['hostname'],
         username=router_info['username'],
         password=router_info['password'],
+        optional_args={'cmd_verify': False, 'timeout':400}
     )
 
-    print(f"******** Connecting to IOS Router ({router_info['hostname']}) via Telnet ******** ")
-    ios_router.open()
+    print(f"******** Connecting to IOS Router ({router_info['hostname']}) via SSH ******** ")
 
-    print("Step 1: Checking IOS Router Connection Status")
-    print(ios_router.is_alive())
-    print(f"Host {router_info['hostname']} is alive")
+    print(f"\n### STEP 1/1: CREATE USER {user}  " + "###")
+    #ios_router.open()
+    #print(ios_router.is_alive())
+    #print(f"Host {router_info['hostname']} is alive")
     ios_router.open()
     lista = ios_router.get_users()
 
     if user in lista:
-       print(f"Username {user} already exists! Aborting...")
+       print(f"    SKIP! Username {user} already exists! Finish.\n")
     else:
        commands= ['conf t',
                   'username '+ user + ' password '+ passw
                  ]
-       print(f"Creating user {user}...")
-       print(commands)
+       print(f"   --> Creating user {user}...")
        ios_router.open()
        ios_router.cli(commands)
-       print(f"User {user} created succesfully! Bye :D")
+       print(f"    OK! User {user} created succesfully! Bye :D")
+
 def main():
    parser = argparse.ArgumentParser(description='Create a new user in a Cisco Router')
-
-# un argumento posicional para el nombre de usuario
    parser.add_argument('username', type=str, help='The name of the user.')
    parser.add_argument('password', type=str, help='The password of the user')
-# Analizar los argumentos
    args = parser.parse_args()
 
    with open('routers.csv', mode='r') as csvfile:
