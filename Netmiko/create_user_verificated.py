@@ -1,7 +1,6 @@
 import argparse
 from netmiko import ConnectHandler
 import csv
-# Configurar el analizador de argumentos
 parser = argparse.ArgumentParser(description='Create an user in a Cisco router.')
 
 parser.add_argument('username', help='Username to create')
@@ -27,21 +26,21 @@ with open('hosts_ssh.csv',encoding='utf-8-sig', mode='r') as host_ssh:   #Read s
 
 for row, (clave, valor) in enumerate(HOST.items()):
     try:
-        print(f'{valor}')
-# Conect the device
+        #print(f'{valor}')
         net_connect = ConnectHandler(**valor)
+        print(f"***** Connected to device {valor['host']} *****\n")
         commands = ['conf t',
            'username ' + args.username + ' password ' + args.password
                    ]
-# Verify if the user exists
-        ou = net_connect.send_command("sh run | i user")
+        ou = net_connect.send_config_set(['exit', 'sh run | i user'])
         print(ou)
+        print(f"### STEP 1/1 - CREATE USER {args.username} " + "###\n")
         if args.username not in ou:
+           print("   --> Configuring user...")
            net_connect.send_config_set(commands)
-           print(f"Created user {args.username} !")
+           print(f"    OK! User {args.username} has been created! :)")
         else:
-           print(f"User {args.username} already exists!")
-# Cierra la conexion
+           print(f"    SKIP! User {args.username} already exists!")
         net_connect.disconnect()
 
     except Exception as e:
