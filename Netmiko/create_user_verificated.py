@@ -30,7 +30,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
         net_connect = ConnectHandler(**valor)
         print(f"***** Connected to device {valor['host']} *****\n")
         commands = ['conf t',
-           'username ' + args.username + ' password ' + args.password
+           'username ' + args.username + ' secret ' + args.password
                    ]
         ou = net_connect.send_config_set(['exit', 'sh run | i user'])
         print(ou)
