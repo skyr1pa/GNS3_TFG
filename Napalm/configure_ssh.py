@@ -15,12 +15,11 @@ def process_router(router_info):
     print(f"******** Connecting to IOS Router ({router_info['hostname']}) via Telnet ******** ")
     ios_router.open()
 
-    print("Step 1: Checking IOS Router Connection Status")
-    if True in ios_router.is_alive():
-       print(f"Host {router_info['hostname']} is alive")
+   # print("Step 1: Checking IOS Router Connection Status")
+   # if True in ios_router.is_alive():
+   #    print(f"Host {router_info['hostname']} is alive")
 
     ios_router.config_ssh()
-    print(f"Completed processing for {router_info['hostname']}.")
 
 def main():
     with open('routers.csv', mode='r') as csvfile:
