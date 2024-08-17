@@ -17,7 +17,7 @@ def process_user(router_info, vid, vname):
     ios_router.open()
     show_vlan = 'show vlan brief'
     lista = ios_router.cli([show_vlan])
-    print(f"\n### STEP 1: CREATE VLAN {vid} {vname} " + "###")
+    print(f"\n### STEP 1/4: CREATE VLAN {vid} {vname} " + "###")
     #list(lista.values())[0]
     if vid in lista[show_vlan]:
        print(f"    SKIP! VLAN {vid} already exists! Omiting...\n")
@@ -37,7 +37,7 @@ def process_user(router_info, vid, vname):
     ios_router.open()
     ios_router.config_interfaces(vid)
 
-    print("\n### STEP 3: CONFIGURE SVI INTERFACE " +"###")
+    print("\n### STEP 3/4: CONFIGURE SVI INTERFACE " +"###")
 
     ios_router.open()
     svi_ip = ''
@@ -59,7 +59,7 @@ def process_user(router_info, vid, vname):
         print(ios_router.cli(svi_cmd))
         print(f"    OK! Interface {vid} configured succesfully! :D")
 
-    print("\n### STEP 4: CONFIGURE DEFAULT GATEWAY " + "###")
+    print("\n### STEP 4/4: CONFIGURE DEFAULT GATEWAY " + "###")
 
     ios_router.open()
     config = ios_router.get_config()
@@ -77,9 +77,9 @@ def process_user(router_info, vid, vname):
           'ip routing',
           'ip default-gateway ' + gtw_input,
            ]
-        print("   --> Configuring svi interface...")
+        print("   --> Configuring default gateway...")
         print(ios_router.cli(gtw_cmd))
-        print(f"    OK! SVI interface configured succesfully! Bye! :D")
+        print(f"    OK! Default gateway configured succesfully! Bye! :D")
 
 def main():
    parser = argparse.ArgumentParser(description='Create a vlan and associate to one or various interfaces.\nConfigure the switport mode.\nConfigure SVI or Default Gateway\n')
