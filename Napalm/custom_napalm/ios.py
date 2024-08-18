@@ -29,7 +29,7 @@ class CustomIOSDriver(IOSDriver):
         if 'SSH Enabled' in output:
              print(f"     SKIP! SSH is already enabled on the IOS device")
         else:
-             print(f"   --> Enabling SSH on the IOS Router...")
+             print(f"   --> Enabling SSH on the IOS Device...")
              self.open()
              self.cli(commands)
              print(f"    OK! SSH has been enabled succesfuly! :)")
