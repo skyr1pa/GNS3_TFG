@@ -6,7 +6,6 @@
   vars:
     vlan_id: "{{ vlan_id }}"
     vlan_name: "{{ vlan_name }}"
-    interfaces_list: "{{ interfaces_list }}"
     ansible_network_os: ios
 
   tasks:
@@ -15,16 +14,14 @@
         gather_subset:
           - config
           - interfaces
-      no_log: true
 
     - name: LOADING - Configuring user variables...
       set_fact:
-        iface_list: "{{ interfaces_list.split(',') | list }}"
+        interface_list: "{{ interface_list | default('None') }}"
         default_gateway: "{{ default_gateway | default('') }}"
         svi_ip: "{{ svi_ip | default('') }}"
         svi_check: "{{ 'Vlan' ~ vlan_id not in ansible_net_interfaces }}"
         gtw_check: "{{ 'default-gateway' not in ansible_net_config }}"
-      no_log: true
 
     - name: LOADING - Checking if VLAN already exists...
       ios_command:
@@ -32,7 +29,6 @@
           - "show vlan id {{ vlan_id }}"
       register: check_vlan
       ignore_errors: yes
-      no_log: true
 
     - name: STEP 1 - Configure VLAN
       cisco.ios.ios_vlans:
@@ -50,8 +46,8 @@
             access:
               vlan: "{{ vlan_id }}"
         state: merged
-      loop: "{{ iface_list }}"
-      when: item[:-1] in ['a']
+      loop: "{{ interface_list.split(',') | list }}"
+      when: item[:-1] in ['a'] and interface_list != 'None'
 
 
     - name: STEP 2.2 - Configure interfaces in trunk mode
@@ -62,8 +58,8 @@
               allowed_vlans: "{{ vlan_id }}"
               encapsulation: dot1q
         state: merged
-      loop: "{{ iface_list }}"
-      when: item[-1] in ['t']
+      loop: "{{ interface_list.split(',') | list }}"
+      when: item[-1] in ['t'] and interface_list != 'None'
 
     - name: STEP 3 - Configure SVI interface
       vars:
