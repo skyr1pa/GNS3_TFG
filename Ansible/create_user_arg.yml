@@ -5,8 +5,6 @@
   connection: network_cli
   vars:
     ansible_network_os: ios
-    username: "{{ username }}"
-    password: "{{ password }}"
 
   tasks:
     - name: LOADING - Collecting facts...
@@ -14,11 +12,14 @@
         gather_subset:
           - config
 
-    - name: LOADING - Checking user...
+    - name: LOADING - Processing variables...
       set_fact:
-        user_exists: "{{ username not in ansible_net_config }}"
         username: "{{ username | default('') }}"
         password: "{{ password | default('12345') }}"
+
+    - name: LOADING - Checking if user exists...
+      set_fact:
+        user_exists: "{{ username not in ansible_net_config }}"
 
     - name: STEP 1/1 Create user on Cisco router
       vars:
