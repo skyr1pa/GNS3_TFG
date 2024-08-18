@@ -9,7 +9,7 @@ def process_user(router_info, vid, vname):
 
     ios_router = driver_ios(hostname, username, password, optional_args={'cmd_verify': False} )
 
-    print(f"******** Connecting to IOS Device ({router_info['hostname']}) via SSH ******** ")
+    print(f"******** Connecting to IOS Router ({router_info['hostname']}) via SSH ******** ")
     #ios_router.open()
     #print("Step 1: Checking IOS Router Connection Status")
     #print(ios_router.is_alive())
@@ -28,7 +28,6 @@ def process_user(router_info, vid, vname):
                   'name ' + vname
                  ]
        print(f"   --> Creating vlan {vname}...")
-       print(commands)
        ios_router.open()
        ios_router.cli(commands)
        print(f"    OK! VLAN {vname} created succesfully! :D\n")
@@ -56,7 +55,7 @@ def process_user(router_info, vid, vname):
             ]
         print(f"   --> Configuring interface {vid}...")
         ios_router.open()
-        print(ios_router.cli(svi_cmd))
+        ios_router.cli(svi_cmd)
         print(f"    OK! Interface {vid} configured succesfully! :D")
 
     print("\n### STEP 4/4: CONFIGURE DEFAULT GATEWAY " + "###")
@@ -78,7 +77,7 @@ def process_user(router_info, vid, vname):
           'ip default-gateway ' + gtw_input,
            ]
         print("   --> Configuring default gateway...")
-        print(ios_router.cli(gtw_cmd))
+        ios_router.cli(gtw_cmd)
         print(f"    OK! Default gateway configured succesfully! Bye! :D")
 
 def main():
