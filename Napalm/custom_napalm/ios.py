@@ -1,5 +1,6 @@
 from napalm.ios.ios import IOSDriver
 import time
+import re
 class CustomIOSDriver(IOSDriver):
     """Custom NAPALM Cisco IOS Handler."""
 
@@ -26,9 +27,9 @@ class CustomIOSDriver(IOSDriver):
         output = self._send_command(command)
 
         if 'SSH Enabled' in output:
-             print(f"     SKIP! SSH is already enabled on the IOS Router")
+             print(f"     SKIP! SSH is already enabled on the IOS device")
         else:
-             print(f"   --> Enabling SSH on the IOS device...")
+             print(f"   --> Enabling SSH on the IOS Router...")
              self.open()
              self.cli(commands)
              print(f"    OK! SSH has been enabled succesfuly! :)")
@@ -81,8 +82,9 @@ class CustomIOSDriver(IOSDriver):
                       iface_cmd = [
                          'conf t',
                          'interface range ' + iface,
+                         'switchport trunk encapsulation dot1q',
                          'switchport mode trunk',
-                         'switchport trunk allowed vlan add ' + vid
+                         'switchport trunk allowed vlan ' + vid
                       ]
                       self.open()
                       print(self.cli(iface_cmd))
@@ -92,6 +94,7 @@ class CustomIOSDriver(IOSDriver):
                       iface_cmd = [
                           'conf t',
                           'interface ' + iface,
+                          'switchport trunk encapsulation dot1q',
                           'switchport mode trunk',
                           'switchport trunk allowed vlan add' + vid
                       ]
