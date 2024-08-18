@@ -41,8 +41,8 @@ for row, (clave, valor) in enumerate(HOST.items()):
         if "not found" in output:
             print("  --> Creating VLAN " + args.vlanID +"...\n")
             conf_set = [
-                'vlan ' + args.vlanName ,
                 'vlan ' + args.vlanID ,
+                'name ' + args.vlanName ,
                 'end'
             ]
             con.send_config_set(conf_set)
@@ -95,8 +95,9 @@ for row, (clave, valor) in enumerate(HOST.items()):
                       print("  --> Configuring ports in mode trunk...\n")
                       iface_cmd = [
                          'interface range ' + iface,
+                         'switchport trunk encapsulation dot1q',
                          'switchport mode trunk',
-                         'switchport trunk allowed vlan add ' + args.vlanID
+                         'switchport trunk allowed vlan ' + args.vlanID
                       ]
                       con.send_config_set(iface_cmd)
                       #print(con.send_config_set(iface_cmd))
@@ -106,8 +107,9 @@ for row, (clave, valor) in enumerate(HOST.items()):
                       print("  --> Configuring port in mode trunk...\n")
                       iface_cmd = [
                           'interface ' + iface,
+                          'switchport trunk encapsulation dot1q',
                           'switchport mode trunk',
-                          'switchport trunk allowed vlan add ' + args.vlanID
+                          'switchport trunk allowed vlan ' + args.vlanID
                       ]
                       con.send_config_set(iface_cmd)
                       #print(con.send_config_set(iface_cmd))
