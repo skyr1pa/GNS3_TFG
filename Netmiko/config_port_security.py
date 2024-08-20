@@ -4,7 +4,7 @@ import csv
 parser = argparse.ArgumentParser(description='Configure port security')
 
 parser.add_argument('interface', help='Interface to configure port security')
-# parser.add_argument('password', help='Password of the nre user')
+parser.add_argument('vlan', help='Vlans for configurating dhcp snooping and arp inspection')
 
 args = parser.parse_args()
 with open('hosts_ssh.csv',encoding='utf-8-sig', mode='r') as host_ssh:   #Read specific csv
@@ -36,16 +36,40 @@ for row, (clave, valor) in enumerate(HOST.items()):
            'switchport port-security mac-address sticky'
                    ]
         ou = net_connect.send_config_set(['do show port-security interface ' + args.interface])
-        check = net_connect.send_config_set(['do  show running-config interface  ' + args.interface])
+        port_sec_check = net_connect.send_config_set(['do  show running-config interface  ' + args.interface])
         print(f"### STEP 1/3 - CONFIGURE PORT SECURITY " + "###\n")
-        if 'Enabled' in ou.splitlines()[3]: #Line contains  "Port Security              : Enabled/Disabled"
+        if 'Enabled' in ou.splitlines()[3]:
            print(f"    SKIP! Port security is already enabled on interface {args.interface}!")
-        elif 'access' in check and 'trunk' not in check:
+        elif 'access' in port_sec_check and 'trunk' not in port_sec_check:
            print("   --> Configuring port security...")
-           print(net_connect.send_config_set(commands))
+           net_connect.send_config_set(commands)
            print(f"    OK! Port security has been enabled on interface {args.interface}! :)")
         else:
            print("Cannot configure port security on interface " +  args.interface)
+
+        print(f"### STEP 2/3 - CONFIGURE DHCP SNOOPING " + "###\n")
+        trust = ""
+        dhcp_check = net_connect.send_config_set(['do show ip dhcp snooping'])
+        if 'enabled' in dhcp_check.splitlines()[3]:
+           print(f"    SKIP! DHCP snooping is already enabled on interface {args.interface}!")
+        else:
+           while(trust not in ['y','n']):
+             trust = input("  > Do you want to configure port " + args.interface + " as a trusted port (y/n): ")
+           net_connect.send_config_set(['ip dhcp snooping', 'ip dhcp snooping vlan ' + args.vlan])
+           if(trust == 'y'):
+             net_connect.send_config_set(['interface ' +  args.interface, 'ip dhcp snooping trust'])
+           print(f"    OK! DHCP snooping has been enabled! :)")
+
+
+        print(f"### STEP 3/3 - CONFIGURE ARP INSPECTION " + "###\n")
+        arp_check = net_connect.send_config_set(['do show run | include validate'])
+        if 'ip arp inspection validate' in arp_check.splitlines()[3]:
+           print(f"    SKIP! ARP inspection is already enabled on interface {args.interface}!")
+        else:
+          net_connect.send_config_set(['ip arp inspection vlan ' + args.vlan, 'ip arp inspection validate src-mac dst-mac ip'])
+          if(trust == 'y'):
+             net_connect.send_config_set(['interface ' +  args.interface, 'ip arp inspection trust'])
+          print(f"    OK! ARP INSPECETION has been enabled! :)")
 
     except Exception as e:
        print("Error trying to configure port security':", e)
