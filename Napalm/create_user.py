@@ -9,7 +9,7 @@ def process_user(router_info, user, passw):
         optional_args={'cmd_verify': False, 'timeout':400}
     )
 
-    print(f"******** Connecting to IOS Router ({router_info['hostname']}) via SSH ******** ")
+    print(f"******** Connecting to IOS Device ({router_info['hostname']}) via SSH ******** ")
 
     print(f"\n### STEP 1/1: CREATE USER {user}  " + "###")
     #ios_router.open()
