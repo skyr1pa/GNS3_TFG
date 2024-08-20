@@ -35,10 +35,11 @@ for row, (clave, valor) in enumerate(HOST.items()):
            'switchport port-security violation shutdown',
            'switchport port-security mac-address sticky'
                    ]
-        ou = net_connect.send_config_set(['do show port-security interface ' + args.interface])
+        port_sec_enabled = net_connect.send_config_set(['do show port-security interface ' + args.interface])
         port_sec_check = net_connect.send_config_set(['do  show running-config interface  ' + args.interface])
+        
         print(f"### STEP 1/3 - CONFIGURE PORT SECURITY " + "###\n")
-        if 'Enabled' in ou.splitlines()[3]:
+        if 'Enabled' in port_sec_enabled.splitlines()[3]:
            print(f"    SKIP! Port security is already enabled on interface {args.interface}!")
         elif 'access' in port_sec_check and 'trunk' not in port_sec_check:
            print("   --> Configuring port security...")
@@ -55,6 +56,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
         else:
            while(trust not in ['y','n']):
              trust = input("  > Do you want to configure port " + args.interface + " as a trusted port (y/n): ")
+           print("   --> Configuring DHCP snooping...")
            net_connect.send_config_set(['ip dhcp snooping', 'ip dhcp snooping vlan ' + args.vlan])
            if(trust == 'y'):
              net_connect.send_config_set(['interface ' +  args.interface, 'ip dhcp snooping trust'])
@@ -66,6 +68,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
         if 'ip arp inspection validate' in arp_check.splitlines()[3]:
            print(f"    SKIP! ARP inspection is already enabled on interface {args.interface}!")
         else:
+          print("   --> Configuring ARP inspection...")
           net_connect.send_config_set(['ip arp inspection vlan ' + args.vlan, 'ip arp inspection validate src-mac dst-mac ip'])
           if(trust == 'y'):
              net_connect.send_config_set(['interface ' +  args.interface, 'ip arp inspection trust'])
