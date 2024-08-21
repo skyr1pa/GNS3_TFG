@@ -43,9 +43,8 @@ def process_user(router_info, interface, vlan):
     print(f"### STEP 2/3 - CONFIGURE DHCP SNOOPING " + "###\n")
     trust = ""
     ios_router.open()
-    run_config = ios_router.get_config()['running']
-    check_vlan = 'ip dhcp snooping vlan ' + vlan
-    if check_vlan in run_config:
+    check_vlan_dhcp = ios_router.cli(['sh run | i ip dhcp snooping vlan'])
+    if vlan in list(check_vlan_dhcp.values())[0]:
         print(f"    SKIP! DHCP snooping is already enabled on vlan {vlan}!")
     else:
         while(trust not in ['y','n']):
@@ -59,8 +58,8 @@ def process_user(router_info, interface, vlan):
         print(f"    OK! DHCP snooping has been enabled! :)")
 
     print(f"### STEP 3/3 - CONFIGURE ARP INSPECTION " + "###\n")
-    check_vlan_arp = 'ip arp inspection vlan ' + vlan
-    if check_vlan_arp in run_config:
+    check_vlan_arp = ios_router.cli(['sh run | i ip arp inspection vlan'])
+    if vlan in list(check_vlan_arp.values())[0]:
         print(f"    SKIP! ARP inspection is already enabled on vlan {vlan}!")
     else:
         print("   --> Configuring ARP inspection...")
