@@ -1,7 +1,7 @@
 import argparse
 from netmiko import ConnectHandler
 import csv
-parser = argparse.ArgumentParser(description='Configure port security')
+parser = argparse.ArgumentParser(description='Configure port security, arp inspection and port security')
 
 parser.add_argument('interface', help='Interface to configure port security')
 parser.add_argument('vlan', help='Vlans for configurating dhcp snooping and arp inspection')
@@ -50,9 +50,9 @@ for row, (clave, valor) in enumerate(HOST.items()):
 
         print(f"### STEP 2/3 - CONFIGURE DHCP SNOOPING " + "###\n")
         trust = ""
-        dhcp_check = net_connect.send_config_set(['do show ip dhcp snooping'])
-        if 'enabled' in dhcp_check.splitlines()[3]:
-           print(f"    SKIP! DHCP snooping is already enabled on interface {args.interface}!")
+        dhcp_check = net_connect.send_config_set(['sh run | i ip dhcp snooping vlan '])
+        if args.vlan in dhcp_check:
+           print(f"    SKIP! DHCP snooping is already enabled on vlan {args.vlan}!")
         else:
            while(trust not in ['y','n']):
              trust = input("  > Do you want to configure port " + args.interface + " as a trusted port (y/n): ")
@@ -64,9 +64,9 @@ for row, (clave, valor) in enumerate(HOST.items()):
 
 
         print(f"### STEP 3/3 - CONFIGURE ARP INSPECTION " + "###\n")
-        arp_check = net_connect.send_config_set(['do show run | include validate'])
-        if 'ip arp inspection validate' in arp_check.splitlines()[3]:
-           print(f"    SKIP! ARP inspection is already enabled on interface {args.interface}!")
+        arp_check = net_connect.send_config_set(['sh run | i ip arp inspection vlan'])
+        if args.vlan in arp_check:
+           print(f"    SKIP! ARP inspection is already enabled on vlan {args.vlan}!")
         else:
           print("   --> Configuring ARP inspection...")
           net_connect.send_config_set(['ip arp inspection vlan ' + args.vlan, 'ip arp inspection validate src-mac dst-mac ip'])
