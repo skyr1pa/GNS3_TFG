@@ -1,0 +1,71 @@
+---
+- name: Configure Port Security, DHCP Snooping, and ARP Inspection
+  hosts: switches
+  gather_facts: True
+  connection: network_cli
+  vars:
+    interface: "{{ interface }}"  # Variable de entrada para la interfaz
+    vlan: "{{ vlan }}"            # Variable de entrada para la VLAN
+    ansible_network_os: ios
+
+  tasks:
+    - name: LOADING - Configuring user variables...
+      set_fact:
+        interface: "{{ interface | default('') }}"
+        vlan: "{{ vlan | default('') }}"
+
+    - name: LOADING - Check if Port Security is enabled
+      ios_command:
+        commands:
+          - "show port-security interface {{ interface }}"
+          - "show running-config interface {{ interface }}"
+      register: port_security_check
+
+    - name: LOADING - Configuring conditional variables...
+      set_fact:
+          port_sec_enabled: "{{ 'Enabled' not in port_security_check.stdout[0] }}"
+          port_access: "{{ 'access' in port_security_check.stdout[1] and 'trunk' not in port_security_check.stdout[1] }}"
+
+    - name: STEP 1 - Configure Port Security if not enabled
+      vars:
+        is_enabled: port_sec_enabled
+        is_trunk: port_access
+      ios_config:
+        lines:
+          - "switchport port-security"
+          - "switchport port-security maximum 1"
+          - "switchport port-security violation shutdown"
+          - "switchport port-security mac-address sticky"
+        parents:
+          - "interface {{ interface }}"
+      when: "lookup('vars', is_enabled) and lookup('vars', is_trunk)"
+
+    - name: LOADING - Check if DHCP Snooping is enabled
+      ios_command:
+        commands:
+          - "show running-config | include ip dhcp snooping vlan"
+      register: dhcp_snooping_check_cmd
+
+    - name: STEP 2 - Configure DHCP Snooping if not enabled
+      ios_config:
+        lines:
+          - "ip dhcp snooping"
+          - "ip dhcp snooping vlan {{ vlan }}"
+          - "interface {{ interface }}"
+          - "ip dhcp snooping trust"
+      when: "'{{ vlan }}' not in dhcp_snooping_check_cmd.stdout[0]"
+
+    - name: LOADING - Check if ARP Inspection is enabled
+      ios_command:
+        commands:
+          - "show running-config | include ip arp inspection vlan"
+      register: arp_inspection_check_cmd
+
+    - name: STEP 3 - Configure ARP Inspection if not enabled
+      ios_config:
+        lines:
+          - "ip arp inspection vlan {{ vlan }}"
+          - "ip arp inspection validate src-mac dst-mac ip"
+          - "interface {{ interface }}"
+          - "ip arp inspection trust"
+      when: "'{{ vlan }}' not in arp_inspection_check_cmd.stdout[0]"
