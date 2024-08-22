@@ -30,7 +30,7 @@
       register: check_vlan
       ignore_errors: yes
 
-    - name: STEP 1 - Configure VLAN
+    - name: STEP 1/4 - Configure VLAN
       cisco.ios.ios_vlans:
         config:
         - name: "{{ vlan_name }}"
@@ -39,7 +39,7 @@
           shutdown: disabled
       when: check_vlan.failed
 
-    - name: STEP 2.1 - Configure interfaces in access mode
+    - name: STEP 2.1/4 - Configure interfaces in access mode
       ios_l2_interfaces:
         config:
           - name: "{{ item[:-1] }}"
@@ -50,7 +50,7 @@
       when: item[:-1] in ['a'] and interface_list != 'None'
 
 
-    - name: STEP 2.2 - Configure interfaces in trunk mode
+    - name: STEP 2.2/4 - Configure interfaces in trunk mode
       ios_l2_interfaces:
         config:
           - name: "{{ item[:-1] }}"
@@ -61,7 +61,7 @@
       loop: "{{ interface_list.split(',') | list }}"
       when: item[-1] in ['t'] and interface_list != 'None'
 
-    - name: STEP 3 - Configure SVI interface
+    - name: STEP 3/4 - Configure SVI interface
       vars:
         svi_var: svi_check
       ios_l3_interfaces:
@@ -71,7 +71,7 @@
             - address: "{{ svi_ip }}"
       when: "lookup('vars', svi_var) and svi_ip != ''"
 
-    - name: STEP 4 - Configure default gateway
+    - name: STEP 4/4 - Configure default gateway
       vars:
         gtw_var: gtw_check
       ios_config:
