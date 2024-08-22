@@ -38,7 +38,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
         port_sec_enabled = net_connect.send_config_set(['do show port-security interface ' + args.interface])
         port_sec_check = net_connect.send_config_set(['do  show running-config interface  ' + args.interface])
 
-        print(f"### STEP 1/3 - CONFIGURE PORT SECURITY " + "###\n")
+        print(f"\n### STEP 1/3 - CONFIGURE PORT SECURITY " + "###")
         if 'Enabled' in port_sec_enabled.splitlines()[3]:
            print(f"    SKIP! Port security is already enabled on interface {args.interface}!")
         elif 'access' in port_sec_check and 'trunk' not in port_sec_check:
@@ -48,7 +48,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
         else:
            print("Cannot configure port security on interface " +  args.interface)
 
-        print(f"### STEP 2/3 - CONFIGURE DHCP SNOOPING " + "###\n")
+        print(f"\n### STEP 2/3 - CONFIGURE DHCP SNOOPING " + "###")
         trust = ""
         dhcp_check = net_connect.send_config_set(['do sh run | i ip dhcp snooping vlan '])
         if args.vlan in dhcp_check:
@@ -63,7 +63,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
            print(f"    OK! DHCP snooping has been enabled! :)")
 
 
-        print(f"### STEP 3/3 - CONFIGURE ARP INSPECTION " + "###\n")
+        print(f"\n### STEP 3/3 - CONFIGURE ARP INSPECTION " + "###")
         arp_check = net_connect.send_config_set(['do sh run | i ip arp inspection vlan'])
         if args.vlan in arp_check:
            print(f"    SKIP! ARP inspection is already enabled on vlan {args.vlan}!")
