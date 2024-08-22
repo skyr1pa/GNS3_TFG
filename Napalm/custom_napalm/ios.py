@@ -36,7 +36,7 @@ class CustomIOSDriver(IOSDriver):
              self.close()
 
     def config_interfaces(self, vid):
-        print("### STEP 2: CONFIGURE INTERFACES " + "###")
+        print("### STEP 2/4: CONFIGURE INTERFACES " + "###")
         input_iface = ''
 
         while(input_iface == '' or input_iface == ' '):
