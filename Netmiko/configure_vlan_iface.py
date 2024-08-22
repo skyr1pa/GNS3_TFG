@@ -33,8 +33,8 @@ for row, (clave, valor) in enumerate(HOST.items()):
     try:
         con = ConnectHandler(**valor)
         print("Established SSH conection.\n")
-
-        print("\n##############CONFIGURE VLAN############## \n")
+        
+        print(f"### STEP 1/4 - CONFIGURE VLAN " + "###\n")
         command = 'show vlan id ' + args.vlanID
         output = con.send_command(command)
 
@@ -52,7 +52,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
 
         input_iface = ''
 
-        print("\n##############CONFIGURE INTERFACES############## \n")
+        print(f"### STEP 2/4 - CONFIGURE INTERFACES " + "###\n")
 
         while(input_iface == '' or input_iface == ' '):
            input_iface = input("  > Specify wanted Interface separated by ';'. Use '-' for ranges ('s' to skip):\n")
@@ -116,8 +116,8 @@ for row, (clave, valor) in enumerate(HOST.items()):
                       print("   OK! Interface range " + iface + " configured succesfully\n")
                else:
                   continue
-
-        print("##############CONFIGURE SVI INTERFACE############## \n")
+                   
+        print(f"### STEP 3/4 - CONFIGURE SVI INTERFACE " + "###\n")
         svi_cmd = "show interface vlan" + args.vlanID
         svi_output = con.send_command(svi_cmd)
         if "SVI" in svi_output:
@@ -134,7 +134,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
               print("    OK! Interface VLAN" + args.vlanID + " configured succesfully! :D\n")
               #print(con.send_config_set(ip_cmd))
 
-        print("##############CONFIGURE DEFAULT GATEWAY##############\n")
+        print(f"### STEP 4/4 - CONFIGURE DEFAULT GATEWAY " + "###\n")
         gtw_output = con.send_command("sh run | i default-gateway")
         if "gateway" in gtw_output:
            print("    SKIP! Default gateway is already configured\n")
