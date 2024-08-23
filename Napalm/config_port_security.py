@@ -14,7 +14,7 @@ def process_user(router_info, interface, vlan):
     #print(ios_router.is_alive())
     #print(f"Host {router_info['hostname']} is alive")
 
-    print(f"### STEP 1/3 - CONFIGURE PORT SECURITY " + "###\n")
+    print(f"\n### STEP 1/3 - CONFIGURE PORT SECURITY " + "###")
 
     commands = ['conf t',
            'interface ' + interface ,
@@ -30,7 +30,7 @@ def process_user(router_info, interface, vlan):
     ios_router.open()
     port_sec_check = ios_router.cli(['show running-config interface  ' + interface])
 
-    if 'Enabled' in ou:
+    if 'Enabled' in list(ou.values())[0]:
         print(f"    SKIP! Port security is already enabled on interface {interface}!")
     elif 'access' in port_sec_check and 'trunk' not in port_sec_check:
         print("   --> Configuring port security...")
@@ -40,7 +40,7 @@ def process_user(router_info, interface, vlan):
     else:
         print("Cannot configure port security on interface " + interface)
 
-    print(f"### STEP 2/3 - CONFIGURE DHCP SNOOPING " + "###\n")
+    print(f"\n### STEP 2/3 - CONFIGURE DHCP SNOOPING " + "###")
     trust = ""
     ios_router.open()
     check_vlan_dhcp = ios_router.cli(['sh run | i ip dhcp snooping vlan'])
@@ -57,7 +57,7 @@ def process_user(router_info, interface, vlan):
             ios_router.cli(['interface ' +  interface, 'ip dhcp snooping trust'])
         print(f"    OK! DHCP snooping has been enabled! :)")
 
-    print(f"### STEP 3/3 - CONFIGURE ARP INSPECTION " + "###\n")
+    print(f"\n### STEP 3/3 - CONFIGURE ARP INSPECTION " + "###")
     check_vlan_arp = ios_router.cli(['sh run | i ip arp inspection vlan'])
     if vlan in list(check_vlan_arp.values())[0]:
         print(f"    SKIP! ARP inspection is already enabled on vlan {vlan}!")
