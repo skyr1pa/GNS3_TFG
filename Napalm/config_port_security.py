@@ -32,7 +32,7 @@ def process_user(router_info, interface, vlan):
 
     if 'Enabled' in list(ou.values())[0]:
         print(f"    SKIP! Port security is already enabled on interface {interface}!")
-    elif 'access' in port_sec_check and 'trunk' not in port_sec_check:
+    elif 'access' in list(port_sec_check.values())[0] and 'trunk' not in list(port_sec_check.values())[0]:
         print("   --> Configuring port security...")
         ios_router.open()
         ios_router.cli(commands)
