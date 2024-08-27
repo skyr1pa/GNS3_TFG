@@ -9,7 +9,7 @@ def process_user(router_info, interface, vlan):
         optional_args={'cmd_verify': False, 'timeout':400}
     )
 
-    print(f"******** Connecting to IOS Router ({router_info['hostname']}) via SSH ******** ")
+    print(f"******** Connecting to IOS Device ({router_info['hostname']}) via SSH ******** ")
     #ios_router.open()
     #print(ios_router.is_alive())
     #print(f"Host {router_info['hostname']} is alive")
