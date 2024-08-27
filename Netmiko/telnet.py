@@ -34,25 +34,21 @@ with open('hosts_telnet.csv',encoding='utf-8-sig', mode='r') as hosts_telnet:   
 
 for row, (clave, valor) in enumerate(HOST.items()):
     try:
-        print(f"{valor['host']}")
+       # print(f"{valor['host']}")
         telnet_session = ConnectHandler(**valor)
 
         print(f"***** Connected to device {valor['host']} *****\n")
         output = telnet_session.send_command('show ip ssh')
-        lines = output.splitlines()
         print("### STEP 1/1 - CONFIGURE SSH " + "###\n")
 
-        for line in lines:
-            if line.startswith('SSH Disabled'):
-                #print(line)
-                print("   --> Configuring SSH v2...")
-                telnet_session.send_config_set(ssh_commands)
-                print("    OK! SSH has been Enabled! :)")
-                break
-            elif line.startswith('SSH Enabled'):
-                #print(line)
-                print("    SKIP! SSH is already enabled on device! Finish :D")
-                break
+        if 'SSH Disabled' in output:
+            #print(line)
+            print("   --> Configuring SSH v2...")
+            telnet_session.send_config_set(ssh_commands)
+            print("    OK! SSH has been Enabled! :)")
+        else:
+            #print(line)
+            print("    SKIP! SSH is already enabled on device! Finish :D")
 
         telnet_session.disconnect()
 
