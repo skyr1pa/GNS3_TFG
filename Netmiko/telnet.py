@@ -38,7 +38,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
         telnet_session = ConnectHandler(**valor)
 
         print(f"***** Connected to device {valor['host']} *****\n")
-        output = telnet_session.send_config_set(['exit', 'show ip ssh'])
+        output = telnet_session.send_command('show ip ssh')
         lines = output.splitlines()
         print("### STEP 1/1 - CONFIGURE SSH " + "###\n")
 
