@@ -9,7 +9,7 @@ def process_user(router_info, vid, vname):
 
     ios_router = driver_ios(hostname, username, password, optional_args={'cmd_verify': False} )
 
-    print(f"******** Connecting to IOS Router ({router_info['hostname']}) via SSH ******** ")
+    print(f"******** Connecting to IOS Device ({router_info['hostname']}) via SSH ******** ")
     #ios_router.open()
     #print("Step 1: Checking IOS Router Connection Status")
     #print(ios_router.is_alive())
