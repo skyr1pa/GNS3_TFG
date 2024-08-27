@@ -8,7 +8,7 @@ def check_vlanID(value):
         raise argparse.ArgumentTypeError(f"VLAN ID must be an integer between 1 and 4094. You provided {value}.")
     return str(ivalue)
 
-parser = argparse.ArgumentParser(description='Create a vlan and associate to one or various interfaces.\nConfigure the switport mode.\nConfigure SVI or Default Gateway\n')
+parser = argparse.ArgumentParser(description='Create a vlan and associate to one or various interfaces.\nConfigure the switchport mode.\nConfigure SVI or Default Gateway\n')
 parser.add_argument('vlanID', type=check_vlanID, help='Number of vlan (1-4094)')
 parser.add_argument('vlanName', help='Name of the vlan')
 args = parser.parse_args()
@@ -32,8 +32,8 @@ with open('hosts_ssh.csv',encoding='utf-8-sig', mode='r') as hosts_ssh:   #Read 
 for row, (clave, valor) in enumerate(HOST.items()):
     try:
         con = ConnectHandler(**valor)
-        print("Established SSH conection.\n")
-        
+        print(f"***** Connected to device {valor['host']} *****\n")
+
         print(f"### STEP 1/4 - CONFIGURE VLAN " + "###\n")
         command = 'show vlan id ' + args.vlanID
         output = con.send_command(command)
@@ -62,7 +62,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
            for iface in parsed_interfaces:
                input_mode = ''
                if '-' in iface:
-                  print(" * Configuring VLAN " + args.vlanID + " on interface rangue " + iface +"\n")
+                  print(" * Configuring VLAN " + args.vlanID + " on interface range " + iface +"\n")
                else:
                   print(" * Configuring VLAN " + args.vlanID + " on interface " + iface +"\n")
                while input_mode not in ['a', 't', 's']:
@@ -116,7 +116,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
                       print("   OK! Interface range " + iface + " configured succesfully\n")
                else:
                   continue
-                   
+
         print(f"### STEP 3/4 - CONFIGURE SVI INTERFACE " + "###\n")
         svi_cmd = "show interface vlan" + args.vlanID
         svi_output = con.send_command(svi_cmd)
