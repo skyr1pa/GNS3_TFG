@@ -96,7 +96,7 @@ class CustomIOSDriver(IOSDriver):
                           'interface ' + iface,
                           'switchport trunk encapsulation dot1q',
                           'switchport mode trunk',
-                          'switchport trunk allowed vlan add' + vid
+                          'switchport trunk allowed vlan ' + vid
                       ]
                       self.open()
                       print(self.cli(iface_cmd))
