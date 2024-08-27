@@ -32,7 +32,7 @@ for row, (clave, valor) in enumerate(HOST.items()):
         commands = ['conf t',
            'username ' + args.username + ' secret ' + args.password
                    ]
-        ou = net_connect.send_config_set(['exit', 'sh run | i user'])
+        ou = net_connect.send_command('sh run | i user')
         print(f"### STEP 1/1 - CREATE USER {args.username} " + "###\n")
         if args.username not in ou:
            print("   --> Configuring user...")
