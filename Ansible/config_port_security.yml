@@ -52,7 +52,6 @@
           - "ip dhcp snooping"
           - "ip dhcp snooping vlan {{ vlan }}"
           - "interface {{ interface }}"
-          - "ip dhcp snooping trust"
       when: "'{{ vlan }}' not in dhcp_snooping_check_cmd.stdout[0]"
 
     - name: LOADING - Check if ARP Inspection is enabled
@@ -67,5 +66,4 @@
           - "ip arp inspection vlan {{ vlan }}"
           - "ip arp inspection validate src-mac dst-mac ip"
           - "interface {{ interface }}"
-          - "ip arp inspection trust"
       when: "'{{ vlan }}' not in arp_inspection_check_cmd.stdout[0]"
