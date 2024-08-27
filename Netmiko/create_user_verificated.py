@@ -1,7 +1,7 @@
 import argparse
 from netmiko import ConnectHandler
 import csv
-parser = argparse.ArgumentParser(description='Create an user in a Cisco router.')
+parser = argparse.ArgumentParser(description='Create an user in a Cisco device.')
 
 parser.add_argument('username', help='Username to create')
 parser.add_argument('password', help='Password of the nre user')
