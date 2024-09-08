@@ -1,4 +1,28 @@
-import napalm, sys, os, csv, argparse
+import napalm, sys, os, csv, argparse, re, ipaddress
+
+def check_ip(ip):
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
+
+
+def check_ip_with_mask(ip_with_mask):
+    pattern = r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\s(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$'
+
+    match = re.match(pattern, ip_with_mask)
+
+    if not match:
+        return False
+
+    parts = [int(match.group(i)) for i in range(1, 9)]
+
+    for part in parts:
+        if part < 0 or part > 255:
+            return False
+
+    return True
 
 def process_user(router_info, vid, vname):
     driver_ios = napalm.get_network_driver("ios")
@@ -44,7 +68,8 @@ def process_user(router_info, vid, vname):
     if exist and iname in ios_router.get_interfaces_ip():
       print("    SKIP! SVI is already configured for the VLAN " + vid + ". Omiting...")
     else:
-      while(svi_ip == '' or svi_ip == ' '):
+      svi_ip = ""
+      while not check_ip_with_mask(svi_ip) and svi_ip != "s":
          svi_ip = input("  > Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s skip)\n")
       if(svi_ip != 's'):
         svi_cmd = [
@@ -68,9 +93,10 @@ def process_user(router_info, vid, vname):
     if 'default-gateway' in config['running']:
       print("    SKIP! Default gateway is already configured! Bye! :D\n")
     else:
-      while(gtw_input == '' or gtw_input == ' '):
+       gtw_input = ""
+       while not check_ip(gtw_input) and gtw_input != "s":
          gtw_input = input("  > Especify the IP of the default gateway (ej. 192.168.45.254) (s skip)\n")
-      if(gtw_input != 's'):
+       if(gtw_input != 's'):
         gtw_cmd = [
           'conf t',
           'ip routing',
