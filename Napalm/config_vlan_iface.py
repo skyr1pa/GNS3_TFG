@@ -68,7 +68,6 @@ def process_user(router_info, vid, vname):
     if exist and iname in ios_router.get_interfaces_ip():
       print("    SKIP! SVI is already configured for the VLAN " + vid + ". Omiting...")
     else:
-      svi_ip = ""
       while not check_ip_with_mask(svi_ip) and svi_ip != "s":
          svi_ip = input("  > Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s skip)\n")
       if(svi_ip != 's'):
@@ -93,7 +92,6 @@ def process_user(router_info, vid, vname):
     if 'default-gateway' in config['running']:
       print("    SKIP! Default gateway is already configured! Bye! :D\n")
     else:
-       gtw_input = ""
        while not check_ip(gtw_input) and gtw_input != "s":
          gtw_input = input("  > Especify the IP of the default gateway (ej. 192.168.45.254) (s skip)\n")
        if(gtw_input != 's'):
