@@ -1,12 +1,38 @@
 import argparse
 from netmiko import ConnectHandler
 import csv
+import re
+import ipaddress
+
 
 def check_vlanID(value):
     ivalue = int(value)
     if ivalue < 1 or ivalue > 4094:
         raise argparse.ArgumentTypeError(f"VLAN ID must be an integer between 1 and 4094. You provided {value}.")
     return str(ivalue)
+
+def check_ip(ip):
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
+
+def check_ip_with_mask(ip_with_mask):
+    pattern = r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\s(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$'
+
+    match = re.match(pattern, ip_with_mask)
+
+    if not match:
+        return False
+
+    parts = [int(match.group(i)) for i in range(1, 9)]
+
+    for part in parts:
+        if part < 0 or part > 255:
+            return False
+
+    return True
 
 parser = argparse.ArgumentParser(description='Create a vlan and associate to one or various interfaces.\nConfigure the switchport mode.\nConfigure SVI or Default Gateway\n')
 parser.add_argument('vlanID', type=check_vlanID, help='Number of vlan (1-4094)')
@@ -123,7 +149,9 @@ for row, (clave, valor) in enumerate(HOST.items()):
         if "SVI" in svi_output:
            print("    SKIP! SVI is already configured for the VLAN " + args.vlanID +"\n")
         else:
-           svi_ip = input("  > Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s skip)\n")
+           svi_ip = ""
+           while not check_ip_with_mask(svi_ip) and svi_ip != "s":
+              svi_ip = input("  > Especify the IP of the interface and its mask (ej. 192.168.45.1 225.255.255.0) (s skip)\n")
            if(svi_ip != 's'):
               ip_cmd = [
                  'interface vlan ' + args.vlanID,
@@ -139,7 +167,9 @@ for row, (clave, valor) in enumerate(HOST.items()):
         if "gateway" in gtw_output:
            print("    SKIP! Default gateway is already configured\n")
         else:
-           gtw_ip = input(" > Especify the IP of the default gateway (ej. 192.168.45.254) (s skip)\n")
+           gtw_ip = ""
+           while not check_ip(gtw_ip) and gtw_ip != "s":
+              gtw_ip = input(" > Especify the IP of the default gateway (ej. 192.168.45.254) (s skip)\n")
            if(gtw_ip != 's'):
               ip_cmd = [
                  'ip routing',
